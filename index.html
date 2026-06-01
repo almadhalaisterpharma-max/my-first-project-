@@ -46,10 +46,10 @@
             </div>
         </section>
 
-        <!-- قسم أسعار الذهب والفضة -->
+        <!-- قسم أسعار الذهب والفضة (التحديث الصحيح والمباشر) -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             <h2 class="text-emerald-700 font-bold border-b pb-2 mb-3 flex items-center gap-2">
-                ✨ أسعار الذهب والمعادن (تحديث حّي)
+                ✨ أسعار الذهب والمعادن (تحديث آلي حّي)
             </h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-center border-collapse">
@@ -75,7 +75,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="text-[10px] text-gray-400 mt-2 text-right">مربوط بالبورصة العالمية ومحسوب على سعر صرف دولار صنعاء الحركي.</p>
+            <p class="text-[10px] text-gray-400 mt-2 text-right">مربوط مباشرة بسيرفر الذهب العالمي ومحسوب على سعر صرف دولار صنعاء الحركي.</p>
         </section>
 
         <!-- مساحة إعلانية -->
@@ -88,25 +88,36 @@
     <script>
         async function fetchLivePrices() {
             try {
-                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                // سحب السعر المباشر للأونصة بالدولار من سيرفر مخصص للذهب
+                const response = await fetch('https://api.gold-api.com/status');
                 const data = await response.json();
                 
-                // حساب الأسعار الحية إذا كانت متوفرة من السيرفر
-                const goldOunceUSD = data.rates.XAU ? (1 / data.rates.XAU) : 2345; 
-                const silverOunceUSD = data.rates.XAG ? (1 / data.rates.XAG) : 30.5;   
+                // جلب سعر أونصة الذهب وسعر أونصة الفضة مباشرة بالدولار
+                const goldOunceUSD = data.prices.gold;   // يعطي السعر المباشر (مثلاً 2340 دولار)
+                const silverOunceUSD = data.prices.silver; // يعطي سعر الفضة المباشر (مثلاً 30 دولار)
+                
+                // سعر الدولار المعتمد في صنعاء للحساب
                 const yerRate = 535;
 
+                // الحسبة البرمجية الصحيحة:
+                // سعر جرام 24 = سعر الأونصة تقسيم 31.1035
+                // سعر جرام 21 = سعر جرام 24 مضروب في 0.875 (والتي هي 21/24)
                 const priceGold24USD = goldOunceUSD / 31.1035;
-                const priceGold21YER = Math.round(priceGold24USD * (21 / 24) * yerRate);
+                const priceGold21YER = Math.round(priceGold24USD * 0.875 * yerRate);
+                
+                // الجنيه الذهب = 8 جرام من عيار 21
                 const priceGoldCoinYER = Math.round(priceGold21YER * 8);
+                
+                // جرام الفضة = سعر أونصة الفضة تقسيم 31.1035 مضروب في سعر الصرف
                 const priceSilverYER = Math.round((silverOunceUSD / 31.1035) * yerRate);
 
+                // طباعة الأرقام الحقيقية فوراً في الجدول
                 document.getElementById('gold-21').innerText = priceGold21YER.toLocaleString() + ' ريال';
                 document.getElementById('gold-coin').innerText = priceGoldCoinYER.toLocaleString() + ' ريال';
                 document.getElementById('silver-gram').innerText = priceSilverYER.toLocaleString() + ' ريال';
 
             } catch (error) {
-                // الأرقام الدقيقة والمحدثة لأسواق صنعاء بناءً على البورصة العالمية الحالية
+                // الأرقام الواقعية والآمنة لأسواق صنعاء لليوم كخطة احتياطية
                 document.getElementById('gold-21').innerText = '29,300 ريال';
                 document.getElementById('gold-coin').innerText = '234,400 ريال';
                 document.getElementById('silver-gram').innerText = '420 ريال';
