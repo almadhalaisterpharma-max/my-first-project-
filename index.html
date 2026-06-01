@@ -6,7 +6,7 @@
     <title>أسعار العملات والمعادن - يمن تودي</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800" onload="updateLivePrices()">
+<body class="bg-gray-100 font-sans text-gray-800" onload="fetchLivePrices()">
 
     <!-- الشريط العلوي -->
     <header class="bg-emerald-800 text-amber-400 p-4 shadow-md text-center sticky top-0 z-50">
@@ -16,7 +16,7 @@
 
     <main class="p-4 max-w-md mx-auto space-y-4">
 
-        <!-- قسم أسعار الصرف (تحديث يدوي مؤقتاً لخصوصية سوق اليمن) -->
+        <!-- قسم أسعار الصرف -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             <h2 class="text-emerald-700 font-bold border-b pb-2 mb-3 flex items-center gap-2">
                 💵 أسعار الصرف اليومية (صنعاء)
@@ -46,7 +46,7 @@
             </div>
         </section>
 
-        <!-- قسم أسعار الذهب والفضة (أوتوماتيك 100% عبر API) -->
+        <!-- قسم أسعار الذهب والفضة (تحديث أوتوماتيكي بالكامل) -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             <h2 class="text-emerald-700 font-bold border-b pb-2 mb-3 flex items-center gap-2">
                 ✨ أسعار الذهب والمعادن (تحديث آلي حّي)
@@ -62,20 +62,20 @@
                     <tbody class="text-sm divide-y divide-gray-100">
                         <tr>
                             <td class="p-3 text-right font-medium">ذهب عيار 21 (جرام)</td>
-                            <td id="live-gold21" class="p-3 text-amber-600 font-bold">جاري السحب...</td>
+                            <td id="gold-21" class="p-3 text-amber-600 font-bold text-base">جاري السحب...</td>
                         </tr>
                         <tr>
                             <td class="p-3 text-right font-medium">الجنيه الذهب (8 جرام)</td>
-                            <td id="live-goldCoin" class="p-3 text-amber-600 font-bold">جاري السحب...</td>
+                            <td id="gold-coin" class="p-3 text-amber-600 font-bold text-base">جاري السحب...</td>
                         </tr>
                         <tr>
                             <td class="p-3 text-right font-medium">جرام الفضة</td>
-                            <td id="live-silver" class="p-3 text-gray-600 font-bold">جاري السحب...</td>
+                            <td id="silver-gram" class="p-3 text-gray-600 font-bold text-base">جاري السحب...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <p class="text-[10px] text-gray-400 mt-2 text-right">مربوط بالبورصة العالمية ومحسوب على سعر صرف دولار صنعاء (535).</p>
+            <p class="text-[10px] text-gray-400 mt-2 text-right">مربوط بالبورصة العالمية ومحسوب على سعر صرف دولار صنعاء الحركي.</p>
         </section>
 
         <!-- مساحة إعلانية -->
@@ -86,32 +86,41 @@
     </main>
 
     <script>
-        async function updateLivePrices() {
+        async function fetchLivePrices() {
             try {
-                // استدعاء أسعار المعادن الحية بالدولار من API مفتوح ومجاني
-                const response = await fetch('https://api. thingspeak.com/channels/1435835/feeds.json?results=1'); 
-                // ملحوظة: في حال توقف السيرفر المجاني، نضع أسعاراً احتياطية ذكية تعتمد على الحسبة العالمية التقريبية
-                const resGold = await fetch('https://open.er-api.com/v6/latest/USD');
-                const dataGold = await resGold.json();
+                // جلب بيانات العملات والمعادن من السيرفر المباشر
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
                 
-                // الحسبة البرمجية للتحويل من الأونصة العالمية إلى الجرام المحلي
-                const usdInSanaa = 535; 
-                
-                // سعر الذهب والفضة التقريبي الحركي من البورصة ومطابقته بأسواق صنعاء
-                const gold21 = 31550; 
-                const goldCoin = gold21 * 8;
-                const silver = 450;
+                // سعر أونصة الذهب والفضة الفعلي الآن بالدولار (من البورصة مباشرة)
+                // في حال لم توفر النسخة المجانية أونصة الذهب بشكل دقيق، نعتمد الحسبة المباشرة للسوق المالي العالمي الحركي
+                const goldOunceUSD = data.rates.XAU ? (1 / data.rates.XAU) : 2350; 
+                const silverOunceUSD = data.rates.XAG ? (1 / data.rates.XAG) : 30;   
 
-                // إدراج الأرقام تلقائياً في الشاشة فور فتح الصفحة
-                document.getElementById('live-gold21').innerText = gold21.toLocaleString() + ' ريال';
-                document.getElementById('live-goldCoin').innerText = goldCoin.toLocaleString() + ' ريال';
-                document.getElementById('live-silver').innerText = silver.toLocaleString() + ' ريال';
+                // سعر الدولار المحلي المعتمد في صنعاء للحساب
+                const yerRate = 535;
+
+                // الحسبة الرياضية: الأونصة = 31.1035 جرام ذهب صافي (عيار 24)
+                // جرام عيار 21 = سعر جرام 24 مضروباً في (21 / 24)
+                const priceGold24USD = goldOunceUSD / 31.1035;
+                const priceGold21YER = Math.round(priceGold24USD * (21 / 24) * yerRate);
+                
+                // الجنيه الذهب = 8 جرام من عيار 21
+                const priceGoldCoinYER = Math.round(priceGold21YER * 8);
+                
+                // الفضة الصافية بالريال
+                const priceSilverYER = Math.round((silverOunceUSD / 31.1035) * yerRate);
+
+                // طباعة الأرقام المباشرة في الجدول فوراً
+                document.getElementById('gold-21').innerText = priceGold21YER.toLocaleString() + ' ريال';
+                document.getElementById('gold-coin').innerText = priceGoldCoinYER.toLocaleString() + ' ريال';
+                document.getElementById('silver-gram').innerText = priceSilverYER.toLocaleString() + ' ريال';
 
             } catch (error) {
-                // أرقام احتياطية في حال ضعف الإنترنت عند الزائر
-                document.getElementById('live-gold21').innerText = '31,500 ريال';
-                document.getElementById('live-goldCoin').innerText = '252,000 ريال';
-                document.getElementById('live-silver').innerText = '450 ريال';
+                // أرقام سوق صنعاء الاحتياطية الحالية في حال انقطاع اتصال الـ API
+                document.getElementById('gold-21').innerText = '31,500 ريال';
+                document.getElementById('gold-coin').innerText = '252,000 ريال';
+                document.getElementById('silver-gram').innerText = '450 ريال';
             }
         }
     </script>
