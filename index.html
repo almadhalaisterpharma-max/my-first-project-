@@ -93,22 +93,16 @@
                 const data = await response.json();
                 
                 // سعر أونصة الذهب والفضة الفعلي الآن بالدولار (من البورصة مباشرة)
-                // في حال لم توفر النسخة المجانية أونصة الذهب بشكل دقيق، نعتمد الحسبة المباشرة للسوق المالي العالمي الحركي
                 const goldOunceUSD = data.rates.XAU ? (1 / data.rates.XAU) : 2350; 
                 const silverOunceUSD = data.rates.XAG ? (1 / data.rates.XAG) : 30;   
 
                 // سعر الدولار المحلي المعتمد في صنعاء للحساب
                 const yerRate = 535;
 
-                // الحسبة الرياضية: الأونصة = 31.1035 جرام ذهب صافي (عيار 24)
-                // جرام عيار 21 = سعر جرام 24 مضروباً في (21 / 24)
+                // الحسبة الرياضية للتحويل إلى الجرام المحلي عيار 21
                 const priceGold24USD = goldOunceUSD / 31.1035;
                 const priceGold21YER = Math.round(priceGold24USD * (21 / 24) * yerRate);
-                
-                // الجنيه الذهب = 8 جرام من عيار 21
                 const priceGoldCoinYER = Math.round(priceGold21YER * 8);
-                
-                // الفضة الصافية بالريال
                 const priceSilverYER = Math.round((silverOunceUSD / 31.1035) * yerRate);
 
                 // طباعة الأرقام المباشرة في الجدول فوراً
@@ -117,7 +111,7 @@
                 document.getElementById('silver-gram').innerText = priceSilverYER.toLocaleString() + ' ريال';
 
             } catch (error) {
-                // أرقام سوق صنعاء الاحتياطية الحالية في حال انقطاع اتصال الـ API
+                // أرقام احتياطية
                 document.getElementById('gold-21').innerText = '31,500 ريال';
                 document.getElementById('gold-coin').innerText = '252,000 ريال';
                 document.getElementById('silver-gram').innerText = '450 ريال';
